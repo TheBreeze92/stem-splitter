@@ -1,20 +1,25 @@
 # Stem Splitter
 
-Free vocals/drums/bass/melody splitter. Upload an MP3/WAV (or paste a YouTube link) and get back
-4 separated stems, powered by [Demucs](https://github.com/facebookresearch/demucs) (htdemucs).
+Take any song and pull the vocals, drums, bass, and everything else apart onto their own
+separate tracks. Handy for making a karaoke version, practicing along to just the drums,
+grabbing a vocal for a remix, or just hearing a favorite song in a completely new way.
 
-No setup, no signup: **https://stemsplitter-two.vercel.app**
+Try it right now, nothing to install: **https://stemsplitter-two.vercel.app**
 
-That public link talks to a Demucs engine running on a free Hugging Face Space, so it's the
-easiest way to try it. Everything below is for running it yourself.
+Upload a song, or just paste a YouTube link, and your separated tracks come back a couple of
+minutes later, ready to download. It's free.
 
-## Run it locally
+## Want to run your own copy on your computer?
 
-Two processes: a FastAPI + Demucs engine (`engine/`) and a Next.js web app (`web/`).
+The steps below are for that. You don't need any of this to use the link above, it's only for
+people who want their own private version running locally.
 
-### 1. Engine (`engine/`)
+Two things need to be running at once: the part that actually splits the audio, and the website
+you use to upload songs and download the results.
 
-Requires Python 3.10+.
+### 1. Start the splitter
+
+Open a terminal and run:
 
 ```bash
 cd engine
@@ -24,41 +29,39 @@ pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-First run downloads the htdemucs model (a few hundred MB) and caches it.
+The first run downloads the model that does the actual separating (a few hundred MB), so give
+it a minute or two.
 
-`DEMUCS_DEVICE` defaults to `cpu`. On Apple Silicon, don't set it to `mps`: htdemucs hits a real
-PyTorch limitation there (`NotImplementedError: Output channels > 65536 not supported at the MPS
-device`) and every job will crash. CPU is correct, not a fallback.
+One note if you're on a Mac with Apple Silicon (M1, M2, M3): leave this on the regular
+processor, not the graphics chip. Pushing it onto the graphics chip crashes every job, that's a
+known limitation and not something to try to fix.
 
-### 2. Web app (`web/`)
+### 2. Start the website
 
-Requires Node 18+.
+In a second terminal:
 
 ```bash
 cd web
 cp .env.local.example .env.local
-# edit .env.local: NEXT_PUBLIC_ENGINE_URL=http://localhost:8000
+```
+
+Open the new `.env.local` file and point it at the splitter you just started
+(`http://localhost:8000`), then:
+
+```bash
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000 and use it the same way you would the live site.
 
-### macOS shortcut
+### On a Mac, there's a shortcut
 
-If you're on a Mac, `start.command` / `stop.command` in the repo root handle both processes for
-you (health checks, backgrounds them with nohup, opens the browser). Double-click, or:
+Double-click `start.command` in the main folder and it starts both pieces for you and opens the
+site automatically. `stop.command` shuts everything back down.
 
-```bash
-./start.command
-./stop.command
-```
+## Want to host your own copy for other people to use?
 
-Logs land in `/tmp/stem-engine.log` and `/tmp/stem-web.log` if something fails to come up.
-
-## Deploying your own engine
-
-The `engine/` folder is a ready-to-push [Hugging Face Space](https://huggingface.co/spaces)
-(Docker SDK, see `engine/README.md` for the Space config header). Push it to your own Space, free
-CPU tier works, then point `NEXT_PUBLIC_ENGINE_URL` at it and deploy `web/` anywhere that runs
-Next.js (Vercel, etc).
+The splitter can be hosted for free (see the `engine` folder, it's ready to go on Hugging Face
+Spaces), and the website can be put up anywhere that hosts a Next.js site, like Vercel. Point
+the website at your hosted splitter and you've got your own link to share.
