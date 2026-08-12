@@ -1,10 +1,9 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.4.1
-torchaudio==2.4.1
-demucs==4.0.1
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-python-multipart==0.0.9
-soundfile==0.12.1
-numpy==1.26.4
+torch==2.13.0
+demucs==4.1.0
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+python-multipart==0.0.32
+soundfile==0.14.0
+numpy==2.5.2
 yt-dlp  # unpinned on purpose: YouTube changes frequently and yt-dlp needs to track it
