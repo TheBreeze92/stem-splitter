@@ -1,0 +1,11 @@
+{
+  "name": "stem-splitter",
+  "owner": { "name": "Ray Brown" },
+  "plugins": [
+    {
+      "name": "stemsplitter",
+      "source": "./",
+      "description": "Split any song into vocals, drums, bass and melody, locally on your machine."
+    }
+  ]
+}

@@ -1,6 +1,29 @@
 #!/bin/bash
 # Double-click this file (or run ./start.command) to launch Stem Splitter locally.
+# First run on a machine sets everything up automatically; every run after that just launches.
 cd "$(dirname "$0")" || exit 1
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Python isn't installed. Get it from https://www.python.org/downloads/ and run this again."
+  exit 1
+fi
+if ! command -v npm >/dev/null 2>&1; then
+  echo "Node.js isn't installed. Get it from https://nodejs.org and run this again."
+  exit 1
+fi
+
+if [ ! -d "engine/.venv" ]; then
+  echo "First time setup, this only happens once..."
+  ( cd engine && python3 -m venv .venv )
+fi
+( cd engine && source .venv/bin/activate && pip install --quiet -r requirements.txt )
+
+if [ ! -f "web/.env.local" ]; then
+  echo "NEXT_PUBLIC_ENGINE_URL=http://localhost:8000" > web/.env.local
+fi
+if [ ! -d "web/node_modules" ]; then
+  ( cd web && npm install )
+fi
 
 # Clear anything stale still bound to these ports from a previous session.
 lsof -ti:8000 2>/dev/null | xargs kill 2>/dev/null

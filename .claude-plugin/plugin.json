@@ -1,0 +1,6 @@
+{
+  "name": "stemsplitter",
+  "description": "Split any song into vocals, drums, bass and melody, locally on your machine.",
+  "version": "1.0.0",
+  "author": { "name": "Ray Brown" }
+}

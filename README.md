@@ -9,22 +9,42 @@ Try it right now, nothing to install: **https://stemsplitter-two.vercel.app**
 Upload a song, or just paste a YouTube link, and your separated tracks come back a couple of
 minutes later, ready to download. It's free.
 
-## Want to run your own copy on your computer?
+## Already have Claude Code?
+
+Paste these two lines in, once:
+
+```
+/plugin marketplace add TheBreeze92/stem-splitter
+/plugin install stemsplitter@stem-splitter
+```
+
+From then on, just type `/stemsplitter` any time you want to use it. First time it'll take a
+couple of minutes to quietly set itself up, every time after that it just opens.
+
+## Want to run your own copy without Claude Code?
 
 The steps below are for that. You don't need any of this to use the link above, it's only for
 people who want their own private version running locally.
 
+### On a Mac, easiest way
+
+Double-click `start.command` in the main folder. First time, it quietly sets everything up on
+its own, no other steps needed, then opens the site. Every time after that it just opens
+straight away. `stop.command` shuts it back down.
+
+### By hand, on any computer
+
 Two things need to be running at once: the part that actually splits the audio, and the website
 you use to upload songs and download the results.
 
-### 1. Start the splitter
+#### 1. Start the splitter
 
 Open a terminal and run:
 
 ```bash
 cd engine
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
@@ -36,7 +56,7 @@ One note if you're on a Mac with Apple Silicon (M1, M2, M3): leave this on the r
 processor, not the graphics chip. Pushing it onto the graphics chip crashes every job, that's a
 known limitation and not something to try to fix.
 
-### 2. Start the website
+#### 2. Start the website
 
 In a second terminal:
 
@@ -54,11 +74,6 @@ npm run dev
 ```
 
 Open http://localhost:3000 and use it the same way you would the live site.
-
-### On a Mac, there's a shortcut
-
-Double-click `start.command` in the main folder and it starts both pieces for you and opens the
-site automatically. `stop.command` shuts everything back down.
 
 ## Want to host your own copy for other people to use?
 
