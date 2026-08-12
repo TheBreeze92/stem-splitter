@@ -161,15 +161,27 @@ async def run_separation(job: Job, input_path: Path):
     )
 
     async def read_stream():
+        # demucs' tqdm progress bar updates in place via carriage return
+        # (\r), not newline, so readline() (which only ever returns on \n)
+        # blocked for the entire run and only saw a couple of real lines,
+        # never any intermediate percentage. Confirmed by capturing raw
+        # stderr bytes directly: 4 \r-separated updates, 1 \n total across
+        # the whole run. Read raw chunks instead and split on both \r and
+        # \n so every tick is actually seen.
         assert proc.stderr is not None
+        buffer = b""
         while True:
-            line = await proc.stderr.readline()
-            if not line:
+            chunk = await proc.stderr.read(1024)
+            if not chunk:
                 break
-            text = line.decode(errors="ignore")
-            m = PROGRESS_RE.search(text)
-            if m:
-                job.progress = min(int(m.group(1)), 99)
+            buffer += chunk
+            parts = re.split(rb"[\r\n]", buffer)
+            buffer = parts[-1]
+            for part in parts[:-1]:
+                text = part.decode(errors="ignore")
+                m = PROGRESS_RE.search(text)
+                if m:
+                    job.progress = min(int(m.group(1)), 99)
 
     async def stream_then_wait() -> int:
         await read_stream()
