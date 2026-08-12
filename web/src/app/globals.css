@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #eef0f2;
+  --ink: #18181b;
+  --ink-dim: #6b6b72;
+
+  --shell: #f6f6f7;
+  --shell-line: #dcdde0;
+  --shell-shadow: rgba(24, 24, 27, 0.12);
+
+  --screen: #101012;
+  --screen-line: #2a2a2e;
+  --screen-ink: #f2f2f0;
+  --screen-ink-dim: #8a8a90;
+
+  --accent: #e0402f;
+  --accent-ink: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
