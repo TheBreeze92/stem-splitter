@@ -34,6 +34,12 @@ MAX_DURATION_S = 8 * 60  # 8 minute cap, bounds worst-case CPU time on free hard
 TTL_SECONDS = 60 * 60  # delete abandoned jobs after 1 hour
 ALLOWED_EXTENSIONS = {".mp3", ".wav"}
 STEM_NAMES = ("vocals", "drums", "bass", "melody")
+
+# YouTube's default client (android_vr) hands back media URLs that 403 on fetch, and
+# mweb's are skipped without a GVS PO token. Pin web_safari alone: leaving the others
+# in the list is worse than useless, since their formats still win `bestaudio` ranking
+# and then fail to download.
+YT_EXTRACTOR_ARGS = {"youtube": {"player_client": ["web_safari"]}}
 YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com", "music.youtube.com"}
 # Caps worst-case in-flight disk use to MAX_QUEUE_DEPTH * MAX_BYTES, since the
 # sweeper only runs every 5 minutes and the single worker processes one at a
@@ -341,7 +347,13 @@ async def separate_from_url(body: SeparateFromUrlBody):
         raise HTTPException(400, "That doesn't look like a YouTube link.")
 
     def fetch_info():
-        opts = {"quiet": True, "no_warnings": True, "skip_download": True, "noplaylist": True}
+        opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "noplaylist": True,
+            "extractor_args": YT_EXTRACTOR_ARGS,
+        }
         with yt_dlp.YoutubeDL(opts) as ydl:
             return ydl.extract_info(url, download=False)
 
@@ -370,6 +382,7 @@ async def separate_from_url(body: SeparateFromUrlBody):
             "quiet": True,
             "no_warnings": True,
             "noplaylist": True,
+            "extractor_args": YT_EXTRACTOR_ARGS,
             "format": "bestaudio/best",
             "outtmpl": str(work_dir / "input.%(ext)s"),
             "postprocessors": [{
