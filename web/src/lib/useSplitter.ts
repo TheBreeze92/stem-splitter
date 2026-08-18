@@ -267,6 +267,8 @@ export function useSplitter() {
         queue_position: 1,
         elapsed_s: 0,
         error: null,
+        bpm: null,
+        key: null,
       });
 
       // Best-effort: re-fetch the original track for the waveform/preview
@@ -358,6 +360,8 @@ export function useSplitter() {
             queue_position: 1,
             elapsed_s: 0,
             error: null,
+            bpm: null,
+            key: null,
           });
           pollStatus(data.job_id);
         } else {
@@ -398,6 +402,8 @@ export function useSplitter() {
         queue_position: 1,
         elapsed_s: 0,
         error: null,
+        bpm: null,
+        key: null,
       });
 
       try {

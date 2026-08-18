@@ -12,6 +12,10 @@ export interface StatusResponse {
   queue_position: number;
   elapsed_s: number;
   error: string | null;
+  // Best-effort musical analysis, filled in as the job finishes. Either can
+  // stay null if detection failed, so every consumer has to handle absence.
+  bpm: number | null;
+  key: string | null;
 }
 
 export type AppState = "idle" | "uploading" | "processing" | "results" | "error";

@@ -7,3 +7,4 @@ python-multipart==0.0.32
 soundfile==0.14.0
 numpy==2.5.2
 yt-dlp  # unpinned on purpose: YouTube changes frequently and yt-dlp needs to track it
+librosa==1.0.0  # BPM + key detection; key read excludes drums, see analyze_stems

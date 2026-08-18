@@ -249,6 +249,13 @@ export function DeviceShell({
   onReset: () => void;
 }) {
   const playback = useSyncedPlayback();
+  // "112 BPM · Ab major", or just whichever half detection actually returned.
+  const analysisLabel =
+    [status?.bpm ? `${status.bpm} BPM` : null, status?.key ?? null].filter(Boolean).join("  ·  ") || null;
+  // Same facts as the label, shaped for a filename: "112bpm - Ab major".
+  const analysisSuffix = [status?.bpm ? `${status.bpm}bpm` : null, status?.key ?? null]
+    .filter(Boolean)
+    .join(" - ");
   const [dragging, setDragging] = useState(false);
   const [zipping, setZipping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -263,15 +270,16 @@ export function DeviceShell({
     setZipping(true);
     try {
       const zip = new JSZip();
+      const stamp = analysisSuffix ? ` - ${analysisSuffix}` : "";
       STEM_NAMES.forEach((name) => {
         const asset = stems[name];
-        if (asset) zip.file(`${trackName} - ${name}.${asset.ext}`, asset.blob);
+        if (asset) zip.file(`${trackName}${stamp} - ${name}.${asset.ext}`, asset.blob);
       });
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${trackName} - stems.zip`;
+      a.download = `${trackName}${stamp} - stems.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -279,7 +287,7 @@ export function DeviceShell({
     } finally {
       setZipping(false);
     }
-  }, [ready, zipping, stems, trackName]);
+  }, [ready, zipping, stems, trackName, analysisSuffix]);
 
   const fileSizeLabel =
     sourceFile && appState !== "idle" ? `${(sourceFile.size / (1024 * 1024)).toFixed(1)} MB` : null;
@@ -328,7 +336,13 @@ export function DeviceShell({
         )}
         {appState === "error" && <ScreenError message={errorMessage || "Unknown error."} onRetry={onReset} />}
         {appState === "results" && (
-          <ResultsScreen trackName={trackName} stems={stems} playback={playback} peaks={peaks} />
+          <ResultsScreen
+            trackName={trackName}
+            stems={stems}
+            playback={playback}
+            peaks={peaks}
+            analysisLabel={analysisLabel}
+          />
         )}
       </div>
 
@@ -392,11 +406,13 @@ function ResultsScreen({
   stems,
   playback,
   peaks,
+  analysisLabel,
 }: {
   trackName: string;
   stems: Partial<Record<StemName, StemAsset>>;
   playback: Playback;
   peaks: Float32Array | null;
+  analysisLabel: string | null;
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -412,6 +428,12 @@ function ResultsScreen({
         </span>
         <span className={`h-1.5 w-1.5 rounded-full ${playback.isPlaying ? "bg-[var(--accent)]" : "bg-[var(--screen-line)]"}`} />
       </div>
+
+      {analysisLabel && (
+        <div className="px-4 pt-1">
+          <span className="font-mono text-[11px] tracking-wide text-[var(--accent)]">{analysisLabel}</span>
+        </div>
+      )}
 
       <div className="flex-1 px-3 py-2">
         <Waveform peaks={peaks} currentTime={playback.currentTime} duration={playback.duration} onSeek={playback.seek} />
