@@ -96,7 +96,7 @@ function ScreenIdle({ onSubmitUrl }: { onSubmitUrl: (url: string) => void }) {
         <UploadIcon />
       </div>
       <p className="text-sm font-medium text-[var(--screen-ink)]">Drop a track, or tap to choose a file</p>
-      <p className="text-xs text-[var(--screen-ink-dim)]">MP3 or WAV, up to 50MB, up to 8 minutes</p>
+      <p className="text-xs text-[var(--screen-ink-dim)]">MP3 or WAV, up to 50MB, up to 5 minutes</p>
 
       {YOUTUBE_AVAILABLE && (
       <div onClick={(e) => e.stopPropagation()}>

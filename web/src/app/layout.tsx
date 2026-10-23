@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { YOUTUBE_AVAILABLE } from "@/lib/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,11 +13,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const youtubeAvailable = process.env.NEXT_PUBLIC_YOUTUBE_AVAILABLE !== "false";
 
 export const metadata: Metadata = {
   title: "Stem Splitter, split any track into vocals, drums, bass, and melody",
-  description: youtubeAvailable
+  description: YOUTUBE_AVAILABLE
     ? "Drop in an MP3 or WAV, or paste a YouTube link. Get vocals, drums, bass, and melody stems back in your browser. Free, no account."
     : "Drop in an MP3 or WAV. Get vocals, drums, bass, and melody stems back in your browser. Free, no account.",
 };

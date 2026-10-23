@@ -16,7 +16,6 @@ export default function Home() {
     sourceFile,
     previewUrl,
     upload,
-    submitUrl,
     reset,
   } = useSplitter();
   const peaks = useWaveformPeaks(appState === "results" ? sourceFile : null);
@@ -44,7 +43,7 @@ export default function Home() {
         previewUrl={previewUrl}
         peaks={peaks}
         onFile={upload}
-        onSubmitUrl={submitUrl}
+        onSubmitUrl={() => {}}
         onReset={reset}
       />
 
@@ -55,7 +54,7 @@ export default function Home() {
       )}
 
       <footer className="mt-auto pt-16 text-center text-xs text-[var(--ink-dim)]">
-        Files are processed in memory and deleted within an hour. Nothing is stored.
+        Your track is split on your own device and never uploaded. Nothing is stored.
       </footer>
     </main>
   );
