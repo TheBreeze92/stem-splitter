@@ -179,6 +179,18 @@ function ScreenUploading({ trackName, pct, previewUrl }: { trackName: string; pc
   );
 }
 
+// Calm wording instead of a ticking clock: a rough time while we trust it,
+// otherwise just where things are.
+function timeLeftLabel(status: StatusResponse | null): string {
+  if (!status) return "";
+  if (status.progress >= 96) return "Almost done";
+  const eta = status.eta_s;
+  if (eta == null) return "";
+  if (eta < 15) return "Almost done";
+  if (eta < 60) return "Less than a minute left";
+  return `About ${Math.ceil(eta / 60)} min left`;
+}
+
 function ScreenProcessing({
   trackName,
   status,
@@ -205,7 +217,7 @@ function ScreenProcessing({
           style={{ width: `${queued ? 6 : Math.max(pct, 6)}%` }}
         />
       </div>
-      <p className="text-xs text-[var(--screen-ink-dim)]">{status ? `${Math.round(status.elapsed_s)}s elapsed` : ""}</p>
+      <p className="text-xs text-[var(--screen-ink-dim)]">{timeLeftLabel(status)}</p>
       <PreviewControl previewUrl={previewUrl} />
     </div>
   );

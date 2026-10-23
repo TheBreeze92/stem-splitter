@@ -30,6 +30,7 @@ export default function Home() {
             ? "Drop in an MP3 or WAV, or paste a YouTube link. Get four stems back to play and download, right in your browser. Free, no account."
             : "Drop in an MP3 or WAV. Get four stems back to play and download, right in your browser. Free, no account."}
         </p>
+        <p className="mx-auto mt-2 max-w-lg text-xs text-[var(--ink-dim)]">Works best on a newer laptop or desktop.</p>
       </header>
 
       <DeviceShell

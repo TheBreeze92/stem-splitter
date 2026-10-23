@@ -55,12 +55,6 @@ export function useSplitter() {
   // Bumped on reset so a split that finishes after "Split another track"
   // doesn't overwrite the fresh screen.
   const runRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const stopTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-  }, []);
 
   const revokeStems = useCallback(() => {
     Object.values(stemsRef.current).forEach((s) => s && URL.revokeObjectURL(s.url));
@@ -72,7 +66,6 @@ export function useSplitter() {
 
   const reset = useCallback(() => {
     runRef.current++;
-    stopTimer();
     revokeStems();
     revokePreview();
     setAppState("idle");
@@ -82,7 +75,7 @@ export function useSplitter() {
     setErrorMessage(null);
     setSourceFile(null);
     setPreviewUrl(null);
-  }, [stopTimer, revokeStems, revokePreview]);
+  }, [revokeStems, revokePreview]);
 
   const upload = useCallback(
     async (file: File) => {
@@ -94,7 +87,6 @@ export function useSplitter() {
       }
 
       const run = ++runRef.current;
-      const started = Date.now();
       const cleanName = sanitizeTrackName(file.name.replace(/\.[^.]+$/, ""));
       setTrackName(cleanName);
       setSourceFile(file);
@@ -105,7 +97,7 @@ export function useSplitter() {
       setStatus({
         job_id: "",
         state: "running",
-        stage: "Getting ready",
+        stage: "Preparing to split",
         progress: 0,
         queue_position: 0,
         elapsed_s: 0,
@@ -113,17 +105,12 @@ export function useSplitter() {
         bpm: null,
         key: null,
       });
-      stopTimer();
-      timerRef.current = setInterval(() => {
-        setStatus((prev) => (prev ? { ...prev, elapsed_s: (Date.now() - started) / 1000 } : prev));
-      }, 1000);
 
       try {
-        const blobs = await splitInBrowser(file, MAX_DURATION_S, ({ stage, pct }) => {
-          if (run === runRef.current) setStatus((prev) => (prev ? { ...prev, stage, progress: pct } : prev));
+        const blobs = await splitInBrowser(file, MAX_DURATION_S, ({ stage, pct, etaS }) => {
+          if (run === runRef.current) setStatus((prev) => (prev ? { ...prev, stage, progress: pct, eta_s: etaS } : prev));
         });
         if (run !== runRef.current) return;
-        stopTimer();
         setStems(
           Object.fromEntries(
             STEM_NAMES.map((name) => [name, { url: URL.createObjectURL(blobs[name]), blob: blobs[name], ext: "wav" as const }])
@@ -132,7 +119,6 @@ export function useSplitter() {
         setAppState("results");
       } catch (err) {
         if (run !== runRef.current) return;
-        stopTimer();
         setErrorMessage(
           err instanceof Error && err.message
             ? err.message
@@ -141,14 +127,13 @@ export function useSplitter() {
         setAppState("error");
       }
     },
-    [stopTimer]
+    []
   );
 
   useEffect(() => () => {
-    stopTimer();
     revokeStems();
     revokePreview();
-  }, [stopTimer, revokeStems, revokePreview]);
+  }, [revokeStems, revokePreview]);
 
   return {
     appState,

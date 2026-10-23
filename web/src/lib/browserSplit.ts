@@ -10,15 +10,18 @@ const CACHE_NAME = "stemsplitter-model-v1";
 
 export interface SplitProgress {
   stage: string;
-  pct: number; // 0-100, restarts at 0 for each stage
+  pct: number; // 0-100 across the whole job
+  etaS: number | null; // seconds left, null while unknown
 }
 
-async function loadModel(onProgress: (p: SplitProgress) => void): Promise<ArrayBuffer> {
+// Returns the model plus whether it had to be downloaded (first visit), which
+// decides how much of the overall bar the download takes up.
+async function loadModel(onDownload: (fraction: number) => void): Promise<{ bytes: ArrayBuffer; downloaded: boolean }> {
   let cache: Cache | null = null;
   try {
     cache = await caches.open(CACHE_NAME);
     const hit = await cache.match(MODEL_URL);
-    if (hit) return hit.arrayBuffer();
+    if (hit) return { bytes: await hit.arrayBuffer(), downloaded: false };
   } catch {
     // Cache API unavailable (private window); just download every time.
   }
@@ -34,10 +37,7 @@ async function loadModel(onProgress: (p: SplitProgress) => void): Promise<ArrayB
     if (done) break;
     chunks.push(value);
     loaded += value.length;
-    onProgress({
-      stage: "Downloading the splitter (first visit only, about 170MB)",
-      pct: Math.min(99, Math.round((loaded / total) * 100)),
-    });
+    onDownload(Math.min(1, loaded / total));
   }
   const bytes = new Uint8Array(loaded);
   let offset = 0;
@@ -50,7 +50,7 @@ async function loadModel(onProgress: (p: SplitProgress) => void): Promise<ArrayB
   } catch {
     // Storage full or blocked: works now, downloads again next visit.
   }
-  return bytes.buffer;
+  return { bytes: bytes.buffer, downloaded: true };
 }
 
 async function decodeTrack(file: File) {
@@ -104,9 +104,15 @@ export async function splitInBrowser(
   maxSeconds: number,
   onProgress: (p: SplitProgress) => void
 ): Promise<Record<StemName, Blob>> {
-  const modelBytes = await loadModel(onProgress);
+  // Bar layout: download (first visit only) is 0-35%, then reading 3%, splitting
+  // up to 97%, finishing 100%. Cached visits skip the download share.
+  const emit = (stage: string, pct: number, etaS: number | null = null) => onProgress({ stage, pct: Math.round(pct), etaS });
+  emit("Preparing to split", 0);
+  const { bytes: modelBytes, downloaded } = await loadModel((f) => emit("Preparing to split", f * 35));
+  const readStart = downloaded ? 35 : 0;
+  const splitStart = readStart + 3;
 
-  onProgress({ stage: "Reading your track", pct: 0 });
+  emit("Reading your track", readStart);
   const decoded = await decodeTrack(file).catch(() => {
     throw new Error("Could not read that audio file. Try a different MP3 or WAV.");
   });
@@ -118,16 +124,21 @@ export async function splitInBrowser(
   const ort = await import("onnxruntime-web");
   ort.env.wasm.wasmPaths = "/ort/"; // copied from node_modules by scripts/copy-ort.mjs
   const { DemucsProcessor } = await import("demucs-web");
+  let splitT0 = 0;
   const processor = new DemucsProcessor({
     ort,
-    onProgress: ({ progress, currentSegment, totalSegments }: { progress: number; currentSegment: number; totalSegments: number }) =>
-      onProgress({ stage: `Splitting your track (part ${currentSegment} of ${totalSegments})`, pct: Math.round(progress * 100) }),
+    onProgress: ({ progress }: { progress: number }) => {
+      if (!splitT0) splitT0 = Date.now();
+      // The first parts include one-off setup, so only trust the estimate once some of it is done.
+      const eta = progress >= 0.15 ? ((Date.now() - splitT0) / 1000) * ((1 - progress) / progress) : null;
+      emit("Splitting your track", splitStart + progress * (97 - splitStart), eta);
+    },
   });
-  onProgress({ stage: "Starting the splitter", pct: 0 });
+  emit("Preparing to split", splitStart);
   await processor.loadModel(modelBytes);
   const r = await processor.separate(left, right);
 
-  onProgress({ stage: "Preparing your stems", pct: 99 });
+  emit("Finishing up", 98);
   return {
     vocals: encodeWav(r.vocals.left, r.vocals.right),
     drums: encodeWav(r.drums.left, r.drums.right),

@@ -16,6 +16,8 @@ export interface StatusResponse {
   // stay null if detection failed, so every consumer has to handle absence.
   bpm: number | null;
   key: string | null;
+  // Browser splitting only: seconds left, or null/absent while unknown.
+  eta_s?: number | null;
 }
 
 export type AppState = "idle" | "uploading" | "processing" | "results" | "error";
